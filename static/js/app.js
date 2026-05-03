@@ -171,7 +171,7 @@ async function login() {
   if (res.ok) {
     token = data.access_token;
     localStorage.setItem("token", token);
-    document.getElementById("main-nav").style.display = "";
+    setAuthUI(true);
     showSection("constructor");
     loadIngredients();
   } else {
@@ -182,8 +182,17 @@ async function login() {
 function logout() {
   token = ""; localStorage.removeItem("token");
   selected = {}; editingDishId = null; allIngredients = [];
-  document.getElementById("main-nav").style.display = "none";
+  setAuthUI(false);
   showSection("login");
+}
+
+function setAuthUI(loggedIn) {
+  document.querySelectorAll(".auth-only").forEach(el => {
+    el.classList.toggle("d-none", !loggedIn);
+  });
+  document.querySelectorAll(".guest-only").forEach(el => {
+    el.classList.toggle("d-none", loggedIn);
+  });
 }
 
 // ─────────────────────────────────────────────────
@@ -640,10 +649,11 @@ function toast(msg, type = "ok") {
 
 window.onload = () => {
   if (token) {
-    document.getElementById("main-nav").style.display = "";
+    setAuthUI(true);
     showSection("constructor");
     loadIngredients();
   } else {
+    setAuthUI(false);
     showSection("login");
   }
 };

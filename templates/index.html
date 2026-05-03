@@ -9,19 +9,23 @@
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="yaza-nav" id="main-nav" style="display:none">
+<!-- NAVBAR — всегда видна -->
+<nav class="yaza-nav" id="main-nav">
   <div class="container d-flex align-items-center justify-content-between">
-    <a class="yaza-brand" href="#">
+    <a class="yaza-brand" href="#" onclick="token ? showSection('constructor') : showSection('login')">
       <div class="brand-icon">🌿</div>
       <div>YaZa<span class="brand-sub">healthy food constructor</span></div>
     </a>
-    <div class="d-flex gap-2 align-items-center">
-      <button class="nav-pill" id="nav-constructor" onclick="showSection('constructor')">🥗 Конструктор</button>
-      <button class="nav-pill" id="nav-recipes"     onclick="showSection('recipes')">📖 Рецепты</button>
-      <button class="nav-pill" id="nav-my-dishes"   onclick="showSection('my-dishes');loadMyDishes()">📋 Мои блюда</button>
-      <button class="nav-pill" id="nav-creator"     onclick="showSection('creator')">👤 Создатель</button>
-      <button class="nav-pill-outline" onclick="logout()">Выйти</button>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <!-- Кнопки только для авторизованных -->
+      <button class="nav-pill auth-only d-none" id="nav-constructor" onclick="showSection('constructor')">🥗 Конструктор</button>
+      <button class="nav-pill auth-only d-none" id="nav-recipes"     onclick="showSection('recipes')">📖 Рецепты</button>
+      <button class="nav-pill auth-only d-none" id="nav-my-dishes"   onclick="showSection('my-dishes');loadMyDishes()">📋 Мои блюда</button>
+      <!-- Создатель — виден всегда -->
+      <button class="nav-pill" id="nav-creator" onclick="showSection('creator')">👤 Создатель</button>
+      <!-- Кнопки входа/выхода -->
+      <button class="nav-pill-outline auth-only d-none" id="btn-logout" onclick="logout()">Выйти</button>
+      <button class="nav-pill-outline guest-only" id="btn-login" onclick="showSection('login')">Войти</button>
     </div>
   </div>
 </nav>
