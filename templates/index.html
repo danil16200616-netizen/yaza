@@ -20,6 +20,7 @@
       <button class="nav-pill" id="nav-constructor" onclick="showSection('constructor')">🥗 Конструктор</button>
       <button class="nav-pill" id="nav-recipes"     onclick="showSection('recipes')">📖 Рецепты</button>
       <button class="nav-pill" id="nav-my-dishes"   onclick="showSection('my-dishes');loadMyDishes()">📋 Мои блюда</button>
+      <button class="nav-pill" id="nav-creator"     onclick="showSection('creator')">👤 Создатель</button>
       <button class="nav-pill-outline" onclick="logout()">Выйти</button>
     </div>
   </div>
@@ -201,6 +202,59 @@
       </div>
       <div class="col-lg-6">
         <div id="dishes-nutrition-panel"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CREATOR ════ -->
+<div id="section-creator" class="section d-none">
+  <div class="creator-bg">
+    <div class="container py-5">
+      <div class="creator-card">
+
+        <div class="creator-photo-wrap">
+          <img src="/static/img/creator.jpg" alt="Абдурашитов Данила Витальевич" class="creator-photo"
+               onerror="this.src='/static/img/creator-placeholder.svg'">
+          <div class="creator-ring"></div>
+        </div>
+
+        <div class="creator-info">
+          <div class="creator-badge">Создатель проекта</div>
+          <h1 class="creator-name">Абдурашитов<br>Данила Витальевич</h1>
+          <div class="creator-title">Разработчик платформы YaZa</div>
+
+          <div class="creator-divider"></div>
+
+          <div class="creator-about">
+            <p>Дипломный проект: <strong>«Разработка автоматизированной платформы для онлайн-конструирования авторских блюд с расчётом калорийности, стоимости и доступности ингредиентов»</strong></p>
+          </div>
+
+          <div class="creator-stack">
+            <span class="stack-tag">Python</span>
+            <span class="stack-tag">FastAPI</span>
+            <span class="stack-tag">PostgreSQL</span>
+            <span class="stack-tag">SQLAlchemy</span>
+            <span class="stack-tag">JavaScript</span>
+            <span class="stack-tag">Chart.js</span>
+          </div>
+
+          <div class="creator-project-card">
+            <div class="cp-row">
+              <span class="cp-icon">🌿</span>
+              <div>
+                <div class="cp-title">YaZa</div>
+                <div class="cp-sub">healthy food constructor</div>
+              </div>
+            </div>
+            <div class="cp-stats">
+              <div class="cp-stat"><span class="cp-num">50+</span><span class="cp-label">ингредиентов</span></div>
+              <div class="cp-stat"><span class="cp-num">9</span><span class="cp-label">рецептов</span></div>
+              <div class="cp-stat"><span class="cp-num">КБЖУ</span><span class="cp-label">расчёт</span></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

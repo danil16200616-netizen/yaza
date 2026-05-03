@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+  <circle cx="110" cy="110" r="110" fill="#eafaf1"/>
+  <circle cx="110" cy="90" r="40" fill="#27ae60" opacity=".6"/>
+  <ellipse cx="110" cy="175" rx="60" ry="40" fill="#27ae60" opacity=".4"/>
+  <text x="110" y="210" text-anchor="middle" font-size="12" fill="#1e8449" font-family="Arial">Добавьте фото</text>
+</svg>
