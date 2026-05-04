@@ -21,6 +21,7 @@
       <button class="nav-pill auth-only d-none" id="nav-constructor" onclick="showSection('constructor')">🥗 Конструктор</button>
       <button class="nav-pill auth-only d-none" id="nav-recipes"     onclick="showSection('recipes')">📖 Рецепты</button>
       <button class="nav-pill auth-only d-none" id="nav-my-dishes"   onclick="showSection('my-dishes');loadMyDishes()">📋 Мои блюда</button>
+      <button class="nav-pill auth-only d-none" id="nav-diary"       onclick="showSection('diary');initDiary()">📅 Дневник</button>
       <!-- Создатель — виден всегда -->
       <button class="nav-pill" id="nav-creator" onclick="showSection('creator')">👤 Создатель</button>
       <!-- Кнопки входа/выхода -->
@@ -249,6 +250,103 @@
       <div class="col-lg-6">
         <div id="dishes-nutrition-panel"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DIARY ════ -->
+<div id="section-diary" class="section d-none">
+  <div class="container my-4">
+    <div class="row g-3">
+
+      <!-- LEFT: Today's diary -->
+      <div class="col-lg-7">
+
+        <!-- Date nav + summary -->
+        <div class="diet-header">
+          <div class="diet-date-nav">
+            <button onclick="shiftDiaryDate(-1)">‹</button>
+            <div class="diet-date-label" id="diary-date-label">—</div>
+            <button onclick="shiftDiaryDate(1)">›</button>
+          </div>
+          <button class="nav-pill" onclick="goTodayDiary()" style="font-size:0.78rem;padding:4px 12px">Сегодня</button>
+        </div>
+
+        <!-- Daily totals -->
+        <div class="diet-summary">
+          <div class="diet-summary-top">
+            <div>
+              <div class="diet-cal-big" id="diary-total-cal">0</div>
+              <div class="diet-cal-target">из <span id="diary-target-cal">2000</span> ккал</div>
+            </div>
+            <div class="diet-macros-row">
+              <div class="diet-macro"><span class="dm-val" id="diary-total-p">0</span><span class="dm-key">белки г</span></div>
+              <div class="diet-macro"><span class="dm-val" id="diary-total-f">0</span><span class="dm-key">жиры г</span></div>
+              <div class="diet-macro"><span class="dm-val" id="diary-total-c">0</span><span class="dm-key">углев. г</span></div>
+            </div>
+          </div>
+          <div class="diet-progress-track">
+            <div class="diet-progress-fill" id="diary-progress" style="width:0%"></div>
+          </div>
+          <div class="diet-target-row">
+            Норма:
+            <input type="number" id="target-input" placeholder="2000" min="500" max="9999">
+            ккал
+            <button onclick="saveTarget()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:0.78rem">Сохранить</button>
+          </div>
+        </div>
+
+        <!-- Meal blocks -->
+        <div id="meal-breakfast" class="meal-block"></div>
+        <div id="meal-lunch"     class="meal-block"></div>
+        <div id="meal-dinner"    class="meal-block"></div>
+        <div id="meal-snack"     class="meal-block"></div>
+      </div>
+
+      <!-- RIGHT: Calendar -->
+      <div class="col-lg-5">
+        <div class="yaza-card">
+          <div class="yaza-card-header">
+            <span class="page-title"><span class="dot"></span>Календарь питания</span>
+          </div>
+          <div class="yaza-card-body">
+            <div class="calendar-nav">
+              <button onclick="shiftCalMonth(-1)">‹</button>
+              <div class="calendar-month-label" id="cal-month-label">—</div>
+              <button onclick="shiftCalMonth(1)">›</button>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <!-- Legend -->
+            <div class="d-flex gap-3 mt-3 justify-content-center" style="font-size:0.75rem;color:var(--text-muted)">
+              <span><span class="cal-dot dot-green d-inline-block"></span> В норме</span>
+              <span><span class="cal-dot dot-yellow d-inline-block"></span> Почти</span>
+              <span><span class="cal-dot dot-red d-inline-block"></span> Перебор</span>
+              <span><span class="cal-dot dot-empty d-inline-block"></span> Нет данных</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick-add modal -->
+<div class="quick-add-overlay" id="quick-add-overlay" onclick="closeQuickAdd(event)">
+  <div class="quick-add-modal" onclick="event.stopPropagation()">
+    <div class="qa-title">Добавить в <span id="qa-meal-label"></span></div>
+    <div class="qa-tabs">
+      <button class="qa-tab active" onclick="qaTab('dishes',this)">🍽 Мои блюда</button>
+      <button class="qa-tab" onclick="qaTab('ingredients',this)">🥦 Ингредиенты</button>
+    </div>
+    <input id="qa-search" type="text" class="form-control form-control-sm mb-2" placeholder="Поиск..." oninput="qaSearch()">
+    <div class="qa-list" id="qa-list"></div>
+    <div class="qa-weight-row" id="qa-weight-row" style="display:none">
+      <span class="qa-selected-name" id="qa-selected-name"></span>
+      <input id="qa-weight" type="number" value="100" min="1"> г
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn-yaza" onclick="confirmAddEntry()" style="flex:1">Добавить</button>
+      <button class="btn-yaza-outline" onclick="closeQuickAdd()" style="width:80px">Отмена</button>
     </div>
   </div>
 </div>

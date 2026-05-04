@@ -704,6 +704,341 @@ async function deleteDish(id) {
 }
 
 // ─────────────────────────────────────────────────
+//  DIARY (дневник питания)
+// ─────────────────────────────────────────────────
+
+const MEALS = [
+  { key: "breakfast", icon: "☀️",  label: "Завтрак" },
+  { key: "lunch",     icon: "🥗",  label: "Обед" },
+  { key: "dinner",    icon: "🍽",  label: "Ужин" },
+  { key: "snack",     icon: "🍎",  label: "Перекус" },
+];
+
+let diaryDate   = new Date();          // текущая дата дневника
+let diaryData   = null;                // данные за день с сервера
+let calYear     = new Date().getFullYear();
+let calMonth    = new Date().getMonth() + 1;
+let calData     = [];                  // данные календаря
+let qaMode      = "dishes";            // режим quick-add
+let qaMealType  = "";                  // в какой приём пищи добавляем
+let qaSelected  = null;                // выбранный элемент в quick-add
+
+function dateStr(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDateRu(d) {
+  const days   = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+  const months = ["января","февраля","марта","апреля","мая","июня",
+                  "июля","августа","сентября","октября","ноября","декабря"];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+async function initDiary() {
+  await loadDiaryDay();
+  await loadCalendar();
+}
+
+async function loadDiaryDay() {
+  const ds = dateStr(diaryDate);
+  document.getElementById("diary-date-label").textContent = formatDateRu(diaryDate);
+
+  const res = await fetch(`${API}/diet/${ds}`, { headers: authHeaders() });
+  if (!res.ok) return;
+  diaryData = await res.json();
+
+  const targetInput = document.getElementById("target-input");
+  if (targetInput) targetInput.value = diaryData.target_calories;
+
+  renderDiary();
+}
+
+function renderDiary() {
+  if (!diaryData) return;
+
+  // Totals
+  let totCal = 0, totP = 0, totF = 0, totC = 0;
+  diaryData.entries.forEach(e => {
+    totCal += e.calories; totP += e.proteins;
+    totF   += e.fats;     totC += e.carbs;
+  });
+  document.getElementById("diary-total-cal").textContent = Math.round(totCal);
+  document.getElementById("diary-total-p").textContent   = Math.round(totP);
+  document.getElementById("diary-total-f").textContent   = Math.round(totF);
+  document.getElementById("diary-total-c").textContent   = Math.round(totC);
+  document.getElementById("diary-target-cal").textContent = diaryData.target_calories;
+
+  const pct = Math.min(Math.round(totCal / diaryData.target_calories * 100), 100);
+  const fill = document.getElementById("diary-progress");
+  fill.style.width = pct + "%";
+  fill.className = "diet-progress-fill" + (totCal > diaryData.target_calories ? " over" : "");
+
+  // Render each meal block
+  MEALS.forEach(meal => {
+    const entries = diaryData.entries.filter(e => e.meal_type === meal.key);
+    const mealCal = Math.round(entries.reduce((s, e) => s + e.calories, 0));
+    const container = document.getElementById(`meal-${meal.key}`);
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="meal-header" onclick="toggleMeal('${meal.key}')">
+        <div class="meal-title">
+          <span class="meal-icon">${meal.icon}</span>
+          ${meal.label}
+          ${mealCal ? `<span class="meal-kcal-badge">${mealCal} ккал</span>` : ""}
+        </div>
+        <span style="color:var(--text-muted);font-size:0.8rem" id="meal-chevron-${meal.key}">▾</span>
+      </div>
+      <div class="meal-body" id="meal-body-${meal.key}">
+        ${entries.map(e => `
+          <div class="diet-entry">
+            <span class="de-name">${e.name}</span>
+            <span class="de-weight">${e.weight_g}г</span>
+            <span class="de-kcal">${Math.round(e.calories)} ккал</span>
+            <span class="de-macros">Б${Math.round(e.proteins)} Ж${Math.round(e.fats)} У${Math.round(e.carbs)}</span>
+            <button class="de-del" onclick="deleteDietEntry(${e.id})">✕</button>
+          </div>`).join("")}
+        <button class="btn-add-entry" onclick="openQuickAdd('${meal.key}','${meal.label}')">
+          + Добавить продукт или блюдо
+        </button>
+      </div>`;
+  });
+}
+
+function toggleMeal(key) {
+  const body    = document.getElementById(`meal-body-${key}`);
+  const chevron = document.getElementById(`meal-chevron-${key}`);
+  const hidden  = body.style.display === "none";
+  body.style.display    = hidden ? "" : "none";
+  chevron.textContent   = hidden ? "▾" : "▸";
+}
+
+function shiftDiaryDate(delta) {
+  diaryDate.setDate(diaryDate.getDate() + delta);
+  loadDiaryDay();
+}
+
+function goTodayDiary() {
+  diaryDate = new Date();
+  loadDiaryDay();
+}
+
+async function saveTarget() {
+  const val = parseFloat(document.getElementById("target-input").value);
+  if (!val || val < 100) return;
+  const ds = dateStr(diaryDate);
+  await fetch(`${API}/diet/${ds}/target`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ target_calories: val }),
+  });
+  await loadDiaryDay();
+  toast("Норма обновлена", "ok");
+}
+
+async function deleteDietEntry(id) {
+  await fetch(`${API}/diet/entries/${id}`, { method: "DELETE", headers: authHeaders() });
+  await loadDiaryDay();
+  await loadCalendar();
+}
+
+// ── Quick-add modal ──────────────────────────────
+
+function openQuickAdd(mealType, mealLabel) {
+  qaMealType = mealType;
+  qaSelected = null;
+  document.getElementById("qa-meal-label").textContent = mealLabel;
+  document.getElementById("qa-weight-row").style.display = "none";
+  document.getElementById("qa-search").value = "";
+  document.querySelector(".quick-add-overlay").classList.add("open");
+  qaTab("dishes", document.querySelector(".qa-tab"));
+}
+
+function closeQuickAdd(e) {
+  if (e && e.target !== document.querySelector(".quick-add-overlay") && e) return;
+  document.querySelector(".quick-add-overlay").classList.remove("open");
+  qaSelected = null;
+}
+
+function qaTab(mode, btn) {
+  qaMode = mode;
+  document.querySelectorAll(".qa-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("qa-search").value = "";
+  qaSearch();
+}
+
+async function qaSearch() {
+  const q   = document.getElementById("qa-search").value.toLowerCase();
+  const list = document.getElementById("qa-list");
+  list.innerHTML = "";
+
+  if (qaMode === "dishes") {
+    const res   = await fetch(`${API}/dishes/`, { headers: authHeaders() });
+    const items = await res.json();
+    const filtered = items.filter(d => d.name.toLowerCase().includes(q));
+    list.innerHTML = filtered.map(d => {
+      const cal = d.ingredients.reduce((s, i) => s + i.ingredient.calories * i.weight_g / 100, 0);
+      return `<div class="qa-item" onclick="qaSelectDish(${JSON.stringify(d).replace(/"/g,"&quot;")})">
+        <div>
+          <div class="qa-item-name">${d.name}</div>
+          <div class="qa-item-info">${d.ingredients.length} ингр. · ${Math.round(cal)} ккал</div>
+        </div>
+        <span style="color:var(--text-muted);font-size:0.8rem">›</span>
+      </div>`;
+    }).join("") || '<div class="selected-empty"><div style="opacity:.3">🍽</div>Нет блюд</div>';
+  } else {
+    const url = q ? `${API}/ingredients/?search=${encodeURIComponent(q)}` : `${API}/ingredients/`;
+    const res   = await fetch(url);
+    const items = await res.json();
+    list.innerHTML = items.slice(0, 30).map(i => `
+      <div class="qa-item" onclick="qaSelectIngredient(${i.id},'${i.name.replace(/'/g,"\\'")}',${i.calories},${i.proteins},${i.fats},${i.carbs})">
+        <div>
+          <div class="qa-item-name">${i.name}</div>
+          <div class="qa-item-info">${i.calories} ккал/100г · Б${i.proteins} Ж${i.fats} У${i.carbs}</div>
+        </div>
+        <span style="color:var(--text-muted);font-size:0.8rem">›</span>
+      </div>`).join("") || '<div class="selected-empty"><div style="opacity:.3">🥦</div>Нет результатов</div>';
+  }
+}
+
+function qaSelectDish(dish) {
+  qaSelected = { type: "dish", dish };
+  document.getElementById("qa-selected-name").textContent = dish.name;
+  document.getElementById("qa-weight").value = 100;
+  document.getElementById("qa-weight-row").style.display = "flex";
+}
+
+function qaSelectIngredient(id, name, cal, prot, fat, carb) {
+  qaSelected = { type: "ingredient", id, name, cal, prot, fat, carb };
+  document.getElementById("qa-selected-name").textContent = name;
+  document.getElementById("qa-weight").value = 100;
+  document.getElementById("qa-weight-row").style.display = "flex";
+}
+
+async function confirmAddEntry() {
+  if (!qaSelected) { toast("Выберите блюдо или ингредиент", "warn"); return; }
+
+  const weight = parseFloat(document.getElementById("qa-weight").value) || 100;
+  const ds     = dateStr(diaryDate);
+  let entry;
+
+  if (qaSelected.type === "dish") {
+    const d   = qaSelected.dish;
+    // Суммируем КБЖУ блюда
+    const base = d.ingredients.reduce((acc, i) => {
+      const f = i.weight_g / 100;
+      acc.cal  += i.ingredient.calories  * f;
+      acc.prot += i.ingredient.proteins  * f;
+      acc.fat  += i.ingredient.fats      * f;
+      acc.carb += i.ingredient.carbs     * f;
+      acc.w    += i.weight_g;
+      return acc;
+    }, { cal: 0, prot: 0, fat: 0, carb: 0, w: 0 });
+    const factor = base.w > 0 ? weight / base.w : weight / 100;
+    entry = {
+      meal_type: qaMealType, dish_id: d.id, name: d.name,
+      weight_g: weight,
+      calories: Math.round(base.cal  * factor * 10) / 10,
+      proteins: Math.round(base.prot * factor * 10) / 10,
+      fats:     Math.round(base.fat  * factor * 10) / 10,
+      carbs:    Math.round(base.carb * factor * 10) / 10,
+    };
+  } else {
+    const factor = weight / 100;
+    entry = {
+      meal_type: qaMealType, ingredient_id: qaSelected.id, name: qaSelected.name,
+      weight_g: weight,
+      calories: Math.round(qaSelected.cal  * factor * 10) / 10,
+      proteins: Math.round(qaSelected.prot * factor * 10) / 10,
+      fats:     Math.round(qaSelected.fat  * factor * 10) / 10,
+      carbs:    Math.round(qaSelected.carb * factor * 10) / 10,
+    };
+  }
+
+  await fetch(`${API}/diet/${ds}/entries`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(entry),
+  });
+
+  document.querySelector(".quick-add-overlay").classList.remove("open");
+  qaSelected = null;
+  await loadDiaryDay();
+  await loadCalendar();
+  toast("Добавлено в дневник!", "ok");
+}
+
+// ── Calendar ─────────────────────────────────────
+
+const MONTH_NAMES = ["Январь","Февраль","Март","Апрель","Май","Июнь",
+                     "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const DAY_NAMES = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+
+async function loadCalendar() {
+  const res = await fetch(`${API}/diet/calendar/${calYear}/${calMonth}`, { headers: authHeaders() });
+  if (!res.ok) return;
+  const data = await res.json();
+  calData = data.days;
+  renderCalendar();
+}
+
+function renderCalendar() {
+  document.getElementById("cal-month-label").textContent =
+    `${MONTH_NAMES[calMonth - 1]} ${calYear}`;
+
+  const grid = document.getElementById("cal-grid");
+  grid.innerHTML = DAY_NAMES.map(d => `<div class="cal-weekday">${d}</div>`).join("");
+
+  const firstDay = new Date(calYear, calMonth - 1, 1);
+  let startDow = firstDay.getDay(); // 0=Sun
+  startDow = startDow === 0 ? 6 : startDow - 1; // make Mon=0
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+
+  const todayStr = dateStr(new Date());
+  const selStr   = dateStr(diaryDate);
+
+  for (let i = 0; i < startDow; i++) {
+    grid.innerHTML += `<div class="cal-day empty"></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds    = `${calYear}-${String(calMonth).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const dayData = calData.find(x => x.date === ds);
+    const isToday = ds === todayStr;
+    const isSel   = ds === selStr;
+
+    let dot = "dot-empty", kcalLabel = "";
+    if (dayData && dayData.total_calories > 0) {
+      const p = dayData.pct;
+      dot = p >= 90 && p <= 110 ? "dot-green" : p > 110 ? "dot-red" : "dot-yellow";
+      kcalLabel = Math.round(dayData.total_calories) + " ккал";
+    }
+
+    grid.innerHTML += `
+      <div class="cal-day ${isToday ? "today" : ""} ${isSel ? "selected" : ""}"
+           onclick="calSelectDay('${ds}')">
+        <div class="cal-day-num">${d}</div>
+        <div class="cal-day-kcal">${kcalLabel}</div>
+        <div class="cal-dot ${dot}"></div>
+      </div>`;
+  }
+}
+
+function calSelectDay(ds) {
+  diaryDate = new Date(ds + "T12:00:00");
+  loadDiaryDay();
+  renderCalendar();
+}
+
+function shiftCalMonth(delta) {
+  calMonth += delta;
+  if (calMonth > 12) { calMonth = 1;  calYear++; }
+  if (calMonth < 1)  { calMonth = 12; calYear--; }
+  loadCalendar();
+}
+
+// ─────────────────────────────────────────────────
 //  TOAST
 // ─────────────────────────────────────────────────
 

@@ -3,9 +3,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from app.database import engine
-from app.models import user, ingredient, dish, cooking  # noqa: F401
+from app.models import user, ingredient, dish, cooking, diet  # noqa: F401
 from app.database import Base
-from app.routers import auth, ingredients, dishes
+from app.routers import auth, ingredients, dishes, diet as diet_router
 from app.routers import cooking as cooking_router
 
 Base.metadata.create_all(bind=engine)
@@ -23,6 +23,7 @@ app.include_router(auth.router)
 app.include_router(ingredients.router)
 app.include_router(dishes.router)
 app.include_router(cooking_router.router)
+app.include_router(diet_router.router)
 
 
 @app.get("/", response_class=HTMLResponse)
