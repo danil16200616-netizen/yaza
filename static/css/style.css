@@ -647,7 +647,7 @@ body {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.7rem;
 }
 .cooking-optional {
   font-size: 0.7rem;
@@ -657,11 +657,66 @@ body {
   padding: 2px 8px;
   border-radius: 10px;
 }
+
+/* Method & medium cards horizontal scroll */
+.method-scroll {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  scrollbar-width: thin;
+}
+.method-scroll::-webkit-scrollbar { height: 4px; }
+.method-scroll::-webkit-scrollbar-thumb { background: #c8ecd5; border-radius: 2px; }
+
+.method-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+  min-width: 68px;
+}
+.method-card:hover { border-color: var(--primary-light); background: var(--primary-xlight); }
+.method-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-xlight);
+  box-shadow: 0 0 0 2px rgba(39,174,96,0.2);
+}
+.mc-icon { font-size: 1.4rem; line-height: 1; }
+.mc-name { font-size: 0.65rem; font-weight: 600; text-align: center; color: var(--text); line-height: 1.2; }
+
+.medium-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.medium-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+  font-size: 0.82rem;
+}
+
 .cooking-hint {
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: var(--primary-dark);
-  margin-top: 5px;
-  font-style: italic;
+  background: var(--primary-xlight);
+  border-radius: 6px;
+  padding: 5px 9px;
+  margin-bottom: 6px;
+  line-height: 1.5;
 }
 
 /* ── BEFORE / AFTER ── */
@@ -1083,68 +1138,117 @@ body {
 .calendar-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 1.2rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
 }
 .calendar-nav button {
-  background: var(--surface);
+  background: var(--bg);
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  width: 36px; height: 36px;
-  cursor: pointer; font-size: 1rem;
+  width: 34px; height: 34px;
+  cursor: pointer; font-size: 1.1rem;
   transition: all 0.15s;
   display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
-.calendar-nav button:hover { border-color: var(--primary); color: var(--primary); }
-.calendar-month-label { font-size: 1.1rem; font-weight: 700; min-width: 160px; text-align: center; }
+.calendar-nav button:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-xlight); }
+.calendar-month-label { font-size: 1rem; font-weight: 700; color: var(--text); }
 
-.cal-grid {
+/* Weekday headers */
+.cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  margin-bottom: 4px;
 }
-.cal-weekday {
+.cal-wd {
   text-align: center;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   color: var(--text-muted);
   padding: 4px 0;
   text-transform: uppercase;
 }
+.cal-wd:last-child, .cal-wd:nth-last-child(2) { color: var(--red); opacity: 0.7; }
+
+/* Calendar grid */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
 .cal-day {
-  aspect-ratio: 1;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
-  border: 1.5px solid transparent;
-  position: relative;
-  padding: 4px;
+  transition: all 0.13s;
+  padding: 5px 2px;
   background: var(--surface);
+  border: 1.5px solid transparent;
+  min-height: 52px;
+  position: relative;
 }
-.cal-day:hover { border-color: var(--primary); transform: scale(1.04); }
-.cal-day.empty { background: transparent; cursor: default; }
-.cal-day.empty:hover { border-color: transparent; transform: none; }
-.cal-day.today { border-color: var(--primary) !important; box-shadow: 0 0 0 2px rgba(39,174,96,0.2); }
-.cal-day.selected { background: var(--primary); color: #fff; }
-.cal-day.selected .cal-day-num { color: #fff; }
-.cal-day.selected .cal-day-kcal { color: rgba(255,255,255,0.85); }
+.cal-day:hover { background: var(--primary-xlight); border-color: var(--primary-light); }
+.cal-day.empty { background: transparent !important; cursor: default; border: none; }
+.cal-day.empty:hover { background: transparent !important; }
 
-.cal-day-num  { font-size: 0.85rem; font-weight: 700; line-height: 1; }
-.cal-day-kcal { font-size: 0.62rem; color: var(--text-muted); margin-top: 2px; }
+.cal-day.today {
+  border-color: var(--primary) !important;
+  background: var(--primary-xlight);
+}
+.cal-day.today .cal-day-num { color: var(--primary-dark); }
+
+.cal-day.selected {
+  background: var(--primary) !important;
+  border-color: var(--primary-dark) !important;
+}
+.cal-day.selected .cal-day-num  { color: #fff; }
+.cal-day.selected .cal-day-kcal { color: rgba(255,255,255,0.85); }
+.cal-day.selected .cal-dot      { background: rgba(255,255,255,0.7) !important; }
+
+.cal-day-num  {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+.cal-day-kcal {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
 .cal-dot {
-  width: 6px; height: 6px;
+  width: 5px; height: 5px;
   border-radius: 50%;
   margin-top: 3px;
 }
 .dot-green  { background: #27ae60; }
 .dot-yellow { background: #f9c74f; }
 .dot-red    { background: #e74c3c; }
-.dot-empty  { background: var(--border); }
+.dot-empty  { background: #e0e0e0; }
+.dot-hidden { display: none; }
+
+/* Calendar legend */
+.cal-legend {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.cal-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
 
 /* ── SCROLLBAR (global) ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

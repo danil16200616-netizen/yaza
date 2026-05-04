@@ -205,7 +205,8 @@ function showSection(id) {
   document.querySelectorAll(".nav-pill").forEach(b => b.classList.remove("active"));
   const btn = document.getElementById("nav-" + id);
   if (btn) btn.classList.add("active");
-  if (id === "recipes") renderRecipes();
+  if (id === "recipes")     renderRecipes();
+  if (id === "constructor") loadCookingOptions();
 }
 
 // ─────────────────────────────────────────────────
@@ -214,53 +215,96 @@ function showSection(id) {
 
 let cookingMethods = [];
 let cookingMediums = [];
+let selectedMethodId = null;
+let selectedMediumId = null;
 
 async function loadCookingOptions() {
-  const [mRes, eRes] = await Promise.all([
-    fetch(`${API}/cooking/methods`),
-    fetch(`${API}/cooking/mediums`),
-  ]);
-  cookingMethods = await mRes.json();
-  cookingMediums = await eRes.json();
-
-  const mSel = document.getElementById("cooking-method");
-  if (!mSel) return;
-  mSel.innerHTML = '<option value="">— без обработки —</option>' +
-    cookingMethods.map(m => `<option value="${m.id}">${m.icon} ${m.name}</option>`).join("");
-
-  const eSel = document.getElementById("cooking-medium");
-  if (!eSel) return;
-  eSel.innerHTML = '<option value="">— среда —</option>' +
-    cookingMediums.map(e => `<option value="${e.id}">${e.icon} ${e.name}</option>`).join("");
+  if (cookingMethods.length > 0) { renderMethodCards(); return; } // уже загружены
+  try {
+    const [mRes, eRes] = await Promise.all([
+      fetch(`${API}/cooking/methods`),
+      fetch(`${API}/cooking/mediums`),
+    ]);
+    cookingMethods = await mRes.json();
+    cookingMediums = await eRes.json();
+    renderMethodCards();
+  } catch(e) { console.error("Cooking load error:", e); }
 }
 
-function onMethodChange() {
-  const sel  = document.getElementById("cooking-method");
-  const methodId = parseInt(sel.value);
-  const method = cookingMethods.find(m => m.id === methodId);
-  const medRow = document.getElementById("medium-row");
-  const hint   = document.getElementById("cooking-hint");
+function renderMethodCards() {
+  const container = document.getElementById("method-cards");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="method-card method-card-none ${!selectedMethodId ? "selected" : ""}"
+         onclick="selectMethod(null, this)">
+      <div class="mc-icon">🥗</div>
+      <div class="mc-name">Сырой</div>
+    </div>` +
+    cookingMethods.map(m => `
+    <div class="method-card ${selectedMethodId === m.id ? "selected" : ""}"
+         onclick="selectMethod(${m.id}, this)">
+      <div class="mc-icon">${m.icon}</div>
+      <div class="mc-name">${m.name}</div>
+    </div>`).join("");
+}
+
+function renderMediumCards() {
+  const container = document.getElementById("medium-cards");
+  if (!container) return;
+  container.innerHTML = cookingMediums.map(e => `
+    <div class="method-card ${selectedMediumId === e.id ? "selected" : ""}"
+         onclick="selectMedium(${e.id}, this)">
+      <div class="mc-icon">${e.icon}</div>
+      <div class="mc-name">${e.name}</div>
+    </div>`).join("");
+}
+
+function selectMethod(id, cardEl) {
+  selectedMethodId = id;
+  document.querySelectorAll("#method-cards .method-card").forEach(c => c.classList.remove("selected"));
+  cardEl.classList.add("selected");
+
+  const method = cookingMethods.find(m => m.id === id);
+  const hintEl    = document.getElementById("cooking-hint");
+  const medSection= document.getElementById("medium-section");
 
   if (!method) {
-    medRow.classList.add("d-none");
+    hintEl.style.display = "none";
+    medSection.style.display = "none";
+    document.getElementById("cooking-method-id").value = "";
     return;
   }
 
-  medRow.classList.remove("d-none");
+  document.getElementById("cooking-method-id").value = id;
 
-  // Подсказка с эффектом метода
+  // Подсказка
   const wSign = method.weight_change_pct >= 0 ? "+" : "";
-  let hintText = `Вес: ${wSign}${method.weight_change_pct}% | `;
-  hintText += `Б: ×${method.protein_factor} | Ж: ×${method.fat_factor} | У: ×${method.carb_factor}`;
-  if (method.absorbs_medium) {
-    hintText += ` | Поглощение среды: ${method.medium_absorption_pct}%`;
-  }
-  hint.textContent = hintText;
+  const lines = [
+    `Изменение веса: ${wSign}${method.weight_change_pct}%`,
+    `Белки ×${method.protein_factor} | Жиры ×${method.fat_factor} | Углеводы ×${method.carb_factor}`,
+  ];
+  if (method.absorbs_medium) lines.push(`Поглощает среду: ${method.medium_absorption_pct}%`);
+  hintEl.innerHTML = lines.join("<br>");
+  hintEl.style.display = "block";
+
+  // Среда
+  medSection.style.display = "block";
+  selectedMediumId = null;
+  document.getElementById("cooking-medium-id").value = "";
+  renderMediumCards();
+}
+
+function selectMedium(id, cardEl) {
+  selectedMediumId = id;
+  document.querySelectorAll("#medium-cards .method-card").forEach(c => c.classList.remove("selected"));
+  cardEl.classList.add("selected");
+  document.getElementById("cooking-medium-id").value = id;
 }
 
 function getCookingPayload() {
-  const methodId = parseInt(document.getElementById("cooking-method")?.value) || null;
-  const mediumId = parseInt(document.getElementById("cooking-medium")?.value) || null;
+  const methodId = parseInt(document.getElementById("cooking-method-id")?.value) || null;
+  const mediumId = parseInt(document.getElementById("cooking-medium-id")?.value) || null;
   const amount   = parseFloat(document.getElementById("medium-amount")?.value) || null;
   return {
     cooking_method_id: methodId || null,
@@ -987,42 +1031,47 @@ function renderCalendar() {
   document.getElementById("cal-month-label").textContent =
     `${MONTH_NAMES[calMonth - 1]} ${calYear}`;
 
-  const grid = document.getElementById("cal-grid");
-  grid.innerHTML = DAY_NAMES.map(d => `<div class="cal-weekday">${d}</div>`).join("");
-
-  const firstDay = new Date(calYear, calMonth - 1, 1);
-  let startDow = firstDay.getDay(); // 0=Sun
-  startDow = startDow === 0 ? 6 : startDow - 1; // make Mon=0
-  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
-
+  const grid     = document.getElementById("cal-grid");
   const todayStr = dateStr(new Date());
   const selStr   = dateStr(diaryDate);
 
+  const firstDay   = new Date(calYear, calMonth - 1, 1);
+  let   startDow   = firstDay.getDay();            // 0=Sun
+  startDow = startDow === 0 ? 6 : startDow - 1;   // Mon=0
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+
+  let html = "";
+
+  // пустые ячейки до 1-го числа
   for (let i = 0; i < startDow; i++) {
-    grid.innerHTML += `<div class="cal-day empty"></div>`;
+    html += `<div class="cal-day empty"></div>`;
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const ds    = `${calYear}-${String(calMonth).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const ds      = `${calYear}-${String(calMonth).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
     const dayData = calData.find(x => x.date === ds);
     const isToday = ds === todayStr;
     const isSel   = ds === selStr;
 
-    let dot = "dot-empty", kcalLabel = "";
+    let dot = "dot-hidden", kcalLabel = "";
     if (dayData && dayData.total_calories > 0) {
       const p = dayData.pct;
-      dot = p >= 90 && p <= 110 ? "dot-green" : p > 110 ? "dot-red" : "dot-yellow";
-      kcalLabel = Math.round(dayData.total_calories) + " ккал";
+      dot      = p >= 90 && p <= 110 ? "dot-green" : p > 110 ? "dot-red" : "dot-yellow";
+      kcalLabel = Math.round(dayData.total_calories) + "";
+    } else if (dayData) {
+      dot = "dot-empty";
     }
 
-    grid.innerHTML += `
+    html += `
       <div class="cal-day ${isToday ? "today" : ""} ${isSel ? "selected" : ""}"
            onclick="calSelectDay('${ds}')">
         <div class="cal-day-num">${d}</div>
-        <div class="cal-day-kcal">${kcalLabel}</div>
+        <div class="cal-day-kcal">${kcalLabel ? kcalLabel + " ккал" : ""}</div>
         <div class="cal-dot ${dot}"></div>
       </div>`;
   }
+
+  grid.innerHTML = html;
 }
 
 function calSelectDay(ds) {

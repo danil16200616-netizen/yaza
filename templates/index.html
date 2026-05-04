@@ -140,23 +140,32 @@
             <!-- ТЕРМИЧЕСКАЯ ОБРАБОТКА -->
             <div class="cooking-block mt-3">
               <div class="cooking-block-title">
-                <span>🔥 Термическая обработка</span>
+                <span>🔥 Способ приготовления</span>
                 <span class="cooking-optional">необязательно</span>
               </div>
-              <select id="cooking-method" class="form-select form-select-sm mb-2" onchange="onMethodChange()">
-                <option value="">— без обработки —</option>
-              </select>
-              <div id="medium-row" class="d-none">
-                <div class="d-flex gap-2 align-items-center">
-                  <select id="cooking-medium" class="form-select form-select-sm flex-grow-1">
-                    <option value="">— среда —</option>
-                  </select>
+              <!-- Карточки методов -->
+              <div class="method-scroll" id="method-cards">
+                <div class="method-card method-card-none selected" onclick="selectMethod(null, this)">
+                  <div class="mc-icon">🥗</div>
+                  <div class="mc-name">Сырой</div>
+                </div>
+              </div>
+              <!-- Подсказка об эффекте -->
+              <div class="cooking-hint" id="cooking-hint" style="display:none"></div>
+              <!-- Среда приготовления -->
+              <div id="medium-section" style="display:none">
+                <div class="medium-label">Среда приготовления:</div>
+                <div class="method-scroll" id="medium-cards"></div>
+                <div class="medium-amount-row">
+                  <span class="small text-muted">Количество среды:</span>
                   <input id="medium-amount" type="number" class="form-control form-control-sm"
-                         style="width:80px" placeholder="г/мл" min="1" value="30">
+                         style="width:75px" min="1" value="30">
                   <span class="small text-muted">г</span>
                 </div>
-                <div class="cooking-hint" id="cooking-hint"></div>
               </div>
+              <!-- Скрытые поля для передачи в API -->
+              <input type="hidden" id="cooking-method-id" value="">
+              <input type="hidden" id="cooking-medium-id" value="">
             </div>
 
             <button class="btn-yaza mt-3" id="save-btn" onclick="saveDish()">⚡ Рассчитать и сохранить</button>
@@ -315,13 +324,21 @@
               <div class="calendar-month-label" id="cal-month-label">—</div>
               <button onclick="shiftCalMonth(1)">›</button>
             </div>
+            <!-- Weekday headers -->
+            <div class="cal-weekdays">
+              <div class="cal-wd">Пн</div><div class="cal-wd">Вт</div>
+              <div class="cal-wd">Ср</div><div class="cal-wd">Чт</div>
+              <div class="cal-wd">Пт</div>
+              <div class="cal-wd" style="color:var(--red);opacity:.7">Сб</div>
+              <div class="cal-wd" style="color:var(--red);opacity:.7">Вс</div>
+            </div>
             <div class="cal-grid" id="cal-grid"></div>
             <!-- Legend -->
-            <div class="d-flex gap-3 mt-3 justify-content-center" style="font-size:0.75rem;color:var(--text-muted)">
-              <span><span class="cal-dot dot-green d-inline-block"></span> В норме</span>
-              <span><span class="cal-dot dot-yellow d-inline-block"></span> Почти</span>
-              <span><span class="cal-dot dot-red d-inline-block"></span> Перебор</span>
-              <span><span class="cal-dot dot-empty d-inline-block"></span> Нет данных</span>
+            <div class="cal-legend">
+              <div class="cal-legend-item"><div class="cal-dot dot-green"></div> В норме (90–110%)</div>
+              <div class="cal-legend-item"><div class="cal-dot dot-yellow"></div> Мало (&lt;90%)</div>
+              <div class="cal-legend-item"><div class="cal-dot dot-red"></div> Перебор (&gt;110%)</div>
+              <div class="cal-legend-item"><div class="cal-dot dot-empty"></div> Нет записей</div>
             </div>
           </div>
         </div>
