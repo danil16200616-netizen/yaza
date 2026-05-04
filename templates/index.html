@@ -135,6 +135,29 @@
                 Нажмите на ингредиент чтобы добавить
               </div>
             </div>
+
+            <!-- ТЕРМИЧЕСКАЯ ОБРАБОТКА -->
+            <div class="cooking-block mt-3">
+              <div class="cooking-block-title">
+                <span>🔥 Термическая обработка</span>
+                <span class="cooking-optional">необязательно</span>
+              </div>
+              <select id="cooking-method" class="form-select form-select-sm mb-2" onchange="onMethodChange()">
+                <option value="">— без обработки —</option>
+              </select>
+              <div id="medium-row" class="d-none">
+                <div class="d-flex gap-2 align-items-center">
+                  <select id="cooking-medium" class="form-select form-select-sm flex-grow-1">
+                    <option value="">— среда —</option>
+                  </select>
+                  <input id="medium-amount" type="number" class="form-control form-control-sm"
+                         style="width:80px" placeholder="г/мл" min="1" value="30">
+                  <span class="small text-muted">г</span>
+                </div>
+                <div class="cooking-hint" id="cooking-hint"></div>
+              </div>
+            </div>
+
             <button class="btn-yaza mt-3" id="save-btn" onclick="saveDish()">⚡ Рассчитать и сохранить</button>
           </div>
         </div>
@@ -142,10 +165,29 @@
         <div id="nutrition-result" class="d-none">
           <div class="nutr-panel">
             <h6>Результат расчёта</h6>
-            <div class="nutr-big">
-              <div class="value" id="nutr-calories">—</div>
+
+            <!-- Метод готовки -->
+            <div id="cooking-effect-badge" class="cooking-effect-badge d-none"></div>
+
+            <!-- До / После обработки -->
+            <div id="before-after" class="before-after d-none">
+              <div class="ba-col">
+                <div class="ba-label">До обработки</div>
+                <div class="ba-val" id="raw-calories">—</div>
+                <div class="ba-unit">ккал</div>
+              </div>
+              <div class="ba-arrow">→</div>
+              <div class="ba-col after">
+                <div class="ba-label">После</div>
+                <div class="ba-val" id="nutr-calories">—</div>
+                <div class="ba-unit">ккал</div>
+              </div>
+            </div>
+            <div id="calories-simple" class="nutr-big">
+              <div class="value" id="nutr-calories-simple">—</div>
               <div class="label">ккал · всего</div>
             </div>
+
             <div id="nutrition-chart-wrapper"><canvas id="nutrition-chart"></canvas></div>
             <div class="macro-bars">
               <div class="macro-bar-row">

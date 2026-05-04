@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float, ForeignKey, DateTime, Text
+from sqlalchemy import String, Float, ForeignKey, DateTime, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -15,6 +15,14 @@ class Dish(Base):
 
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     owner: Mapped["User"] = relationship("User", back_populates="dishes")
+
+    # Метод и среда приготовления
+    cooking_method_id: Mapped[int | None] = mapped_column(ForeignKey("cooking_methods.id"), nullable=True)
+    cooking_medium_id: Mapped[int | None] = mapped_column(ForeignKey("cooking_mediums.id"), nullable=True)
+    medium_amount_g: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    cooking_method: Mapped["CookingMethod | None"] = relationship("CookingMethod")
+    cooking_medium: Mapped["CookingMedium | None"] = relationship("CookingMedium")
 
     ingredients: Mapped[list["DishIngredient"]] = relationship(
         "DishIngredient", back_populates="dish", cascade="all, delete-orphan"

@@ -633,6 +633,67 @@ body {
   color: #7d5a00;
 }
 
+/* ── COOKING BLOCK ── */
+.cooking-block {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
+  background: #fafffe;
+}
+.cooking-block-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.6rem;
+}
+.cooking-optional {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.cooking-hint {
+  font-size: 0.75rem;
+  color: var(--primary-dark);
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* ── BEFORE / AFTER ── */
+.before-after {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #fff8e1, #eafaf1);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e8d5a3;
+}
+.ba-col { text-align: center; }
+.ba-col.after .ba-val { color: var(--primary-dark); }
+.ba-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.ba-val   { font-size: 1.6rem; font-weight: 700; color: var(--text); line-height: 1; }
+.ba-unit  { font-size: 0.7rem; color: var(--text-muted); }
+.ba-arrow { font-size: 1.2rem; color: var(--accent); }
+
+.cooking-effect-badge {
+  background: linear-gradient(90deg, #fff3cd, #fef9e7);
+  border: 1px solid #f9c74f;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  color: #7d5a00;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
 /* ── CREATOR PAGE ── */
 .creator-bg {
   min-height: calc(100vh - 70px);

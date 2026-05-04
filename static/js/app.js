@@ -209,6 +209,67 @@ function showSection(id) {
 }
 
 // ─────────────────────────────────────────────────
+//  COOKING METHODS & MEDIUMS
+// ─────────────────────────────────────────────────
+
+let cookingMethods = [];
+let cookingMediums = [];
+
+async function loadCookingOptions() {
+  const [mRes, eRes] = await Promise.all([
+    fetch(`${API}/cooking/methods`),
+    fetch(`${API}/cooking/mediums`),
+  ]);
+  cookingMethods = await mRes.json();
+  cookingMediums = await eRes.json();
+
+  const mSel = document.getElementById("cooking-method");
+  if (!mSel) return;
+  mSel.innerHTML = '<option value="">— без обработки —</option>' +
+    cookingMethods.map(m => `<option value="${m.id}">${m.icon} ${m.name}</option>`).join("");
+
+  const eSel = document.getElementById("cooking-medium");
+  if (!eSel) return;
+  eSel.innerHTML = '<option value="">— среда —</option>' +
+    cookingMediums.map(e => `<option value="${e.id}">${e.icon} ${e.name}</option>`).join("");
+}
+
+function onMethodChange() {
+  const sel  = document.getElementById("cooking-method");
+  const methodId = parseInt(sel.value);
+  const method = cookingMethods.find(m => m.id === methodId);
+  const medRow = document.getElementById("medium-row");
+  const hint   = document.getElementById("cooking-hint");
+
+  if (!method) {
+    medRow.classList.add("d-none");
+    return;
+  }
+
+  medRow.classList.remove("d-none");
+
+  // Подсказка с эффектом метода
+  const wSign = method.weight_change_pct >= 0 ? "+" : "";
+  let hintText = `Вес: ${wSign}${method.weight_change_pct}% | `;
+  hintText += `Б: ×${method.protein_factor} | Ж: ×${method.fat_factor} | У: ×${method.carb_factor}`;
+  if (method.absorbs_medium) {
+    hintText += ` | Поглощение среды: ${method.medium_absorption_pct}%`;
+  }
+  hint.textContent = hintText;
+}
+
+function getCookingPayload() {
+  const methodId = parseInt(document.getElementById("cooking-method")?.value) || null;
+  const mediumId = parseInt(document.getElementById("cooking-medium")?.value) || null;
+  const amount   = parseFloat(document.getElementById("medium-amount")?.value) || null;
+  return {
+    cooking_method_id: methodId || null,
+    cooking_medium_id: (methodId && mediumId) ? mediumId : null,
+    medium_amount_g:   (methodId && mediumId && amount) ? amount : null,
+  };
+}
+
+// ─────────────────────────────────────────────────
 //  INGREDIENTS
 // ─────────────────────────────────────────────────
 
@@ -458,7 +519,7 @@ async function saveDish() {
   const res = await fetch(url, {
     method,
     headers: authHeaders(),
-    body: JSON.stringify({ name, description, servings, ingredients }),
+    body: JSON.stringify({ name, description, servings, ingredients, ...getCookingPayload() }),
   });
 
   if (res.ok) {
@@ -496,7 +557,26 @@ function renderNutritionMainPanel(n) {
   const fPct = Math.round(n.fats    * 9 / totalKcal * 100);
   const cPct = Math.round(n.carbs   * 4 / totalKcal * 100);
 
-  document.getElementById("nutr-calories").textContent      = n.calories;
+  // Блок до/после
+  const hasCooking = !!n.cooking_method_name;
+  const effectBadge  = document.getElementById("cooking-effect-badge");
+  const beforeAfter  = document.getElementById("before-after");
+  const caloriesSimple = document.getElementById("calories-simple");
+
+  if (hasCooking) {
+    effectBadge.classList.remove("d-none");
+    effectBadge.textContent = `🔥 ${n.cooking_effect}`;
+    beforeAfter.classList.remove("d-none");
+    caloriesSimple.classList.add("d-none");
+    document.getElementById("raw-calories").textContent = n.raw_calories;
+    document.getElementById("nutr-calories").textContent = n.calories;
+  } else {
+    effectBadge.classList.add("d-none");
+    beforeAfter.classList.add("d-none");
+    caloriesSimple.classList.remove("d-none");
+    document.getElementById("nutr-calories-simple").textContent = n.calories;
+  }
+
   document.getElementById("nutr-proteins-label").textContent = `${n.proteins} г`;
   document.getElementById("nutr-fats-label").textContent     = `${n.fats} г`;
   document.getElementById("nutr-carbs-label").textContent    = `${n.carbs} г`;
@@ -652,6 +732,7 @@ window.onload = () => {
     setAuthUI(true);
     showSection("constructor");
     loadIngredients();
+    loadCookingOptions();
   } else {
     setAuthUI(false);
     showSection("login");
